@@ -19,7 +19,7 @@ def ask_llm_advisor():
 
     modelIdMain = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
-    metrics_graphic_file = "metrics/aurora-test-1/aurora-test-1-CPUUtilization-plotly.png"
+    metrics_graphic_file = "metrics/fmp-dev-aurora/fmp-dev-aurora-CPUUtilization-plotly.png"
     promptTemplate = f"""
     You are an expert in analyzing AWS RDS metrics and your duty is monitoring the RDS and suggest possible optimization for the RDS cluster.
     You have been provided with a graph of RDS metrics for a specific cluster.
