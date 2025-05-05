@@ -57,7 +57,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             "metric_name": "CPUUtilization",
             "period": 60 * 5,
             "statistics": ['Average', 'Maximum'],
-            "extended_statistics": ['p90', 'p99'],
+            "extended_statistics": ['p50', 'p80', 'p90', 'p99'],
             "start_time": start_time,
             "end_time": end_time
         },
@@ -65,7 +65,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             "metric_name": "DatabaseConnections",
             "period": 60 * 5,
             "statistics": ['Average', 'Maximum', 'Sum'],
-            "extended_statistics": ['p90', 'p99'],
+            "extended_statistics": ['p50', 'p80', 'p90', 'p99'],
             "start_time": start_time,
             "end_time": end_time
         },
@@ -73,7 +73,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             "metric_name": "FreeableMemory",
             "period": 60 * 5,
             "statistics": ['Average', 'Minimum'],
-            "extended_statistics": ['p90', 'p99'],
+            "extended_statistics": ['p50', 'p80', 'p90', 'p99'],
             "start_time": start_time,
             "end_time": end_time
         },
@@ -81,7 +81,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             "metric_name": "Queries",
             "period": 60 * 5,
             "statistics": ['Average', 'Maximum', 'Sum'],
-            "extended_statistics": ['p90', 'p99'],
+            "extended_statistics": ['p50', 'p80', 'p90', 'p99'],
             "start_time": start_time,
             "end_time": end_time
         },
@@ -89,7 +89,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             "metric_name": "ReadIOPS",
             "period": 60 * 60 * 24,
             "statistics": ['Average', 'Maximum', 'Sum'],
-            "extended_statistics": ['p90', 'p99'],
+            "extended_statistics": ['p50', 'p80', 'p90', 'p99'],
             "start_time": start_time,
             "end_time": end_time
         },
@@ -97,7 +97,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             "metric_name": "WriteIOPS",
             "period": 60 * 60 * 24,
             "statistics": ['Average', 'Maximum', 'Sum'],
-            "extended_statistics": ['p90', 'p99'],
+            "extended_statistics": ['p50', 'p80', 'p90', 'p99'],
             "start_time": start_time,
             "end_time": end_time
         }
@@ -109,7 +109,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             "metric_name": "VolumeBytesUsed",
             "period": 60 * 60,
             "statistics": ['Average', 'Maximum'],
-            "extended_statistics": ['p90', 'p99'],
+            "extended_statistics": ['p50', 'p80', 'p90', 'p99'],
             "start_time": start_time,
             "end_time": end_time
         }
