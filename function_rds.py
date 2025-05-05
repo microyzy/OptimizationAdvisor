@@ -2,14 +2,30 @@ import boto3
 from datetime import datetime, timedelta, timezone
 import function_pyplot
 
-def get_rds_clusters(rds_client):
-    # Fetch the list of RDS clusters
-    response = rds_client.describe_db_clusters()
-    clusters = response.get('DBClusters', [])
+def get_rds_clusters(rds_client, clusters=None):
+    """
+    Fetch the list of RDS clusters. If a list of cluster IDs is provided, 
+    only return the clusters that match the specified IDs.
 
-    # Convert the cluster details into a list
-    cluster_list = [cluster['DBClusterIdentifier'] for cluster in clusters]
-    return cluster_list
+    :param rds_client: Boto3 RDS client
+    :param clusters: List of cluster IDs to filter (default: None, fetch all clusters)
+    :return: List of cluster IDs
+    """
+    # Fetch the list of all RDS clusters
+    response = rds_client.describe_db_clusters()
+    all_clusters = response.get('DBClusters', [])
+
+    # Convert the cluster details into a list of cluster IDs
+    all_cluster_ids = [cluster['DBClusterIdentifier'] for cluster in all_clusters]
+
+    # If clusters parameter is provided, filter the list
+    if clusters:
+        # Only include clusters that exist in the fetched list
+        filtered_clusters = [cluster_id for cluster_id in clusters if cluster_id in all_cluster_ids]
+        return filtered_clusters
+
+    # If no clusters parameter is provided, return all cluster IDs
+    return all_cluster_ids
 
 def get_instances_in_cluster(rds_client, cluster_identifier):
     # Fetch the list of instances in the specified cluster

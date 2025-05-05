@@ -5,7 +5,7 @@ import json
 import os
 import aws_cred
 
-def generate_rds_metrics_graphics():
+def generate_rds_metrics_graphics(last_n_days=30, clusters=None):
     # Set up AWS credentials and region
     aws_access_key = aws_cred.AWS_ACCESS_KEY_RDS
     aws_secret_key = aws_cred.AWS_SECRET_KEY_RDS
@@ -23,7 +23,7 @@ def generate_rds_metrics_graphics():
         aws_secret_access_key=aws_secret_key,
         region_name=aws_region)
 
-    start_time = datetime.now() - timedelta(days=30)
+    start_time = datetime.now() - timedelta(days=last_n_days)
     end_time = datetime.now()
     is_show = False
     is_save = True
@@ -93,7 +93,10 @@ def generate_rds_metrics_graphics():
         }
     ]
 
-    rds_clusters = function_rds.get_rds_clusters(rds_client)
+    rds_clusters = function_rds.get_rds_clusters(rds_client, clusters=clusters)
+    if not rds_clusters:
+        print("No RDS clusters found.")
+        return
     for cluster in rds_clusters:
         print("RDS Cluster:", cluster)
         instances = function_rds.get_instances_in_cluster(rds_client, cluster)
