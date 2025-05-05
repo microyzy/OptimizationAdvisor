@@ -5,7 +5,29 @@ import json
 import os
 import aws_cred
 
-def generate_rds_metrics_graphics(last_n_days=30, clusters=None):
+def output_line_agg_result(agg, title=True):
+    """
+    Generate a formatted string for the aggregated result.
+    """
+    columns = [
+        "ServiceTag", "Cluster", "Instance", "MetricName", "MetricUnit",
+        "avg", "max", "min", "sum",
+        "p99_avg", "p99_max",
+        "p90_avg", "p90_max",
+        "p80_avg", "p80_max",
+        "p50_avg", "p50_max"
+        ]
+
+    if title:
+        res = ",".join(columns) + "\n"
+    else:
+        res = ""
+        for col in columns:
+            res += f"{agg.get(col, '-')},"
+        res += "\n"
+    return res
+
+def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=None):
     # Set up AWS credentials and region
     aws_access_key = aws_cred.AWS_ACCESS_KEY_RDS
     aws_secret_key = aws_cred.AWS_SECRET_KEY_RDS
@@ -93,12 +115,14 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None):
         }
     ]
 
-    rds_clusters = function_rds.get_rds_clusters(rds_client, clusters=clusters)
+    rds_clusters = function_rds.get_rds_clusters(rds_client, clusters=clusters, service_tags=service_tags)
     if not rds_clusters:
         print("No RDS clusters found.")
         return
-    for cluster in rds_clusters:
-        print("RDS Cluster:", cluster)
+    for cluster_info in rds_clusters:
+        print("RDS Cluster:", cluster_info)
+        cluster = cluster_info['ClusterId']
+        service_tag = cluster_info['ServiceTag']
         instances = function_rds.get_instances_in_cluster(rds_client, cluster)
 
         ## generate basic infor for this cluster
@@ -121,9 +145,16 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None):
                 instance_type = instance_info['DBInstanceClass']
                 az = instance_info['AvailabilityZone']
                 file.write(f"{instance_id}, {role}, {instance_type}, {az}\n")
+        
+
+        agg_file = f"metrics/{cluster}/{cluster}-aggregated-metrics.csv"
+        # if(os.path.isfile(agg_file)):
+        #     os.remove(agg_file)
+        with open(agg_file, "w") as file:
+            file.write(output_line_agg_result(None, title=True))
 
         for config in metrics_instance_configurations:
-            function_rds.generate_instance_level_metrics_graphics_for_cluster(
+            agg_result = function_rds.generate_instance_level_metrics_graphics_for_cluster(
                 cluster, instances, cloudwatch_client,
                 metric_name=config["metric_name"],
                 period=config["period"],
@@ -132,11 +163,16 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None):
                 start_time=config["start_time"],
                 end_time=config["end_time"],
                 is_show=is_show,
-                is_save=is_save
+                is_save=is_save,
+                service_tag=service_tag
             )
+            # Write agg_result to file
+            with open(agg_file, "a") as file:
+                for key in agg_result:
+                    file.write(output_line_agg_result(agg_result[key], title=False))
         
         for config in metrics_cluster_configurations:
-            function_rds.generate_cluster_level_metrics_graphics_for_cluster(
+            agg_result = function_rds.generate_cluster_level_metrics_graphics_for_cluster(
                 cluster, cloudwatch_client,
                 metric_name=config["metric_name"],
                 period=config["period"],
@@ -145,7 +181,12 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None):
                 start_time=config["start_time"],
                 end_time=config["end_time"],
                 is_show=is_show,
-                is_save=is_save
+                is_save=is_save,
+                service_tag=service_tag
             )
+            # Write agg_result to file
+            with open(agg_file, "a") as file:
+                for key in agg_result:
+                    file.write(output_line_agg_result(agg_result[key], title=False))
 
 
