@@ -5,12 +5,15 @@ import json
 import os
 import aws_cred
 
-def output_line_agg_result(agg, title=True):
+def output_line_agg_result(agg, cluster_spec=None, title=True):
     """
     Generate a formatted string for the aggregated result.
     """
     columns = [
-        "ServiceTag", "Cluster", "Instance", "MetricName", "MetricUnit",
+        "StartTime", "EndTime",
+        "ServiceTag", "Cluster", "DBEngine", "Region",
+        "Instance", "Role", "InstanceType", "AvailabilityZone",
+        "MetricName", "MetricUnit",
         "avg", "max", "min", "sum",
         "p99_avg", "p99_max",
         "p90_avg", "p90_max",
@@ -21,6 +24,12 @@ def output_line_agg_result(agg, title=True):
     if title:
         res = ",".join(columns) + "\n"
     else:
+        agg["DBEngine"] = cluster_spec["DBEngine"]
+        agg["Region"] = cluster_spec["Region"]
+        if cluster_spec.get(agg["Instance"], "-") != "-":
+            agg["Role"] = cluster_spec[agg["Instance"]]["Role"]
+            agg["InstanceType"] = cluster_spec[agg["Instance"]]["InstanceType"]
+            agg["AvailabilityZone"] = cluster_spec[agg["Instance"]]["AvailabilityZone"]
         res = ""
         for col in columns:
             res += f"{agg.get(col, '-')},"
@@ -126,16 +135,23 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
         instances = function_rds.get_instances_in_cluster(rds_client, cluster)
 
         ## generate basic infor for this cluster
+        cluster_spec = {}
         os.makedirs(f"metrics/{cluster}", exist_ok=True)
-        with open(f"metrics/{cluster}/{cluster}.txt", "w") as file:
-            file.write(f"Cluster ID: {cluster}\n")
+        #with open(f"metrics/{cluster}/{cluster}.txt", "w") as file:
+        if 1 == 1:
+            #file.write(f"Cluster ID: {cluster}\n")
             cluster_info = rds_client.describe_db_clusters(DBClusterIdentifier=cluster)['DBClusters'][0]
             cluster_engine = cluster_info['Engine']
-            file.write(f"DB Engine: {cluster_engine}\n")
-            file.write(f"Region: {aws_region}\n")
-            file.write(f"Number of Instances: {len(instances)}\n")
-            file.write("Instances:\n")
+            #file.write(f"DB Engine: {cluster_engine}\n")
+            #file.write(f"Region: {aws_region}\n")
+            #file.write(f"Number of Instances: {len(instances)}\n")
+            #file.write("Instances:\n")
+            cluster_spec["ClusterID"] = cluster
+            cluster_spec["DBEngine"] = cluster_engine
+            cluster_spec["Region"] = aws_region
             for instance_id in instances:
+                instance_spec = {}
+                instance_spec["InstanceID"] = instance_id
                 instance_info = rds_client.describe_db_instances(DBInstanceIdentifier=instance_id)['DBInstances'][0]
                 matching_member = next(
                     (member for member in cluster_info["DBClusterMembers"] if member["DBInstanceIdentifier"] == instance_id), 
@@ -144,8 +160,11 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
                 role = "Writer" if matching_member and matching_member["IsClusterWriter"] else "Reader"
                 instance_type = instance_info['DBInstanceClass']
                 az = instance_info['AvailabilityZone']
-                file.write(f"{instance_id}, {role}, {instance_type}, {az}\n")
-        
+                #file.write(f"{instance_id}, {role}, {instance_type}, {az}\n")
+                instance_spec["Role"] = role
+                instance_spec["InstanceType"] = instance_type
+                instance_spec["AvailabilityZone"] = az
+                cluster_spec[instance_id] = instance_spec
 
         agg_file = f"metrics/{cluster}/{cluster}-aggregated-metrics.csv"
         # if(os.path.isfile(agg_file)):
@@ -169,7 +188,7 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             # Write agg_result to file
             with open(agg_file, "a") as file:
                 for key in agg_result:
-                    file.write(output_line_agg_result(agg_result[key], title=False))
+                    file.write(output_line_agg_result(agg_result[key], cluster_spec, title=False))
         
         for config in metrics_cluster_configurations:
             agg_result = function_rds.generate_cluster_level_metrics_graphics_for_cluster(
@@ -187,6 +206,6 @@ def generate_rds_metrics_graphics(last_n_days=30, clusters=None, service_tags=No
             # Write agg_result to file
             with open(agg_file, "a") as file:
                 for key in agg_result:
-                    file.write(output_line_agg_result(agg_result[key], title=False))
+                    file.write(output_line_agg_result(agg_result[key], cluster_spec, title=False))
 
 

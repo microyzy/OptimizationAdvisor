@@ -252,7 +252,7 @@ def generate_instance_level_metrics_graphics_for_cluster(cluster, instances, clo
         return
     
     # aggregate all metrics for the cluster
-    aggregate_result = aggregate_cluster_metrics(service_tag, cluster, metric_name, all_metrics, all_extended_metrics, statistics, extended_statistics)
+    aggregate_result = aggregate_cluster_metrics(start_time, end_time, service_tag, cluster, metric_name, all_metrics, all_extended_metrics, statistics, extended_statistics)
 
     # generate graphics for all instances in the cluster
     function_pyplot.cluster_graphical_metrics_plot(
@@ -303,7 +303,7 @@ def generate_cluster_level_metrics_graphics_for_cluster(cluster, cloudwatch_clie
     all_extended_metrics["NO-INSTANCE"] = extended_metrics
 
     # aggregate all metrics for the cluster
-    aggregate_result = aggregate_cluster_metrics(service_tag, cluster, metric_name, all_metrics, all_extended_metrics, statistics, extended_statistics)
+    aggregate_result = aggregate_cluster_metrics(start_time, end_time, service_tag, cluster, metric_name, all_metrics, all_extended_metrics, statistics, extended_statistics)
     
     # generate graphics for all instances in the cluster
     function_pyplot.cluster_graphical_metrics_plot(
@@ -321,7 +321,8 @@ def generate_cluster_level_metrics_graphics_for_cluster(cluster, cloudwatch_clie
 
     return aggregate_result
 
-def aggregate_cluster_metrics(service_tag, cluster, metric_name, all_metrics, all_extended_metrics, statistics, extended_statistics):
+def aggregate_cluster_metrics(start_time, end_time, service_tag, cluster, metric_name, 
+                              all_metrics, all_extended_metrics, statistics, extended_statistics):
     """
     Aggregate metrics for the cluster and save them to a file.
     one record per instance, metrics_name
@@ -339,6 +340,8 @@ def aggregate_cluster_metrics(service_tag, cluster, metric_name, all_metrics, al
         if unit is None:
             unit = metrics[0]["Unit"]
 
+        aggregate_result["StartTime"] = start_time.strftime('%Y/%m/%d %H:%M:%S')
+        aggregate_result["EndTime"] = end_time.strftime('%Y/%m/%d %H:%M:%S')
         aggregate_result["ServiceTag"] = service_tag
         aggregate_result["Cluster"] = cluster
         aggregate_result["Instance"] = instance_id
